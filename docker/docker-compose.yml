@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  web_hook:
+    build:
+      dockerfile: docker/Dockerfile
+      context: ../
+    env_file:
+      - ../.env
+    command: uvicorn main:app --host 0.0.0.0 --port 1210 --reload --proxy-headers
+    ports:
+      - 1210:1210
+    volumes:
+      - ../:/file_uploader
+    restart: always
+    networks:
+      - initexample
+      
+  bd:  
+    container_name: postgresql_auth_api
+    image: postgres
+    restart: always
+    volumes:
+    - './data:/var/lib/postgresql/data'
+    - './sql/init.sql:/docker-entrypoint-initdb.d/init.sql'
+    env_file:
+      - ../.env
+    ports:
+      - "5433:5432"
+    networks:
+      - initexample
+networks:
+  initexample:
+    driver: bridge
