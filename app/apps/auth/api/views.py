@@ -16,11 +16,8 @@ router = APIRouter(
 async def login(user: UserSerializer):
     db_user = get_user(user.username)
 
-    print(db_user)
-    print(user.password)
-    print(db_user['password'])
     if db_user is not None and user.password == db_user['password']:
-        token: str = create_token(user.model_dump())
+        token: str = create_token(db_user)
 
         return JSONResponse(
             status_code=status.HTTP_200_OK,

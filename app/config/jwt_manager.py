@@ -5,6 +5,7 @@ from .constants import JWT_ALGORITHM
 
 
 def create_token(data: dict, key: str = JWT_KEY):
+    print(data,key)
     return encode(
         payload=dict(
             expires_time=(datetime.now() + timedelta(minutes=60)).timestamp(),

@@ -4,18 +4,21 @@ from . import settings
 from sqlalchemy.orm import Session
 from sqlalchemy.engine import create_engine, URL
 
+ENGINE = create_engine(
+    URL.create(
+        drivername='postgresql',
+        database=settings.DB_NAME,
+        host=settings.DB_HOST,
+        port=settings.DB_PORT,
+        username=settings.DB_USER,
+        password=settings.DB_PASS
+    )
+)
 
-# def conn_bd():
-#     return create_engine(
-#         URL.create(
-#             'postgresql',
-#             database=settings.DB_NAME,
-#             host=settings.DB_HOST,
-#             port=settings.DB_PORT,
-#             username=settings.DB_USER,
-#             password=settings.DB_PASS
-#         )
-#     )
+
+
+def conn_bd():
+    return ENGINE
 
 def session_db() -> Session:
     return Session(ENGINE)
@@ -32,18 +35,6 @@ def s3_client():
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
     )
-
-
-ENGINE = create_engine(
-    URL.create(
-        drivername='postgresql',
-        database=settings.DB_NAME,
-        host=settings.DB_HOST,
-        port=settings.DB_PORT,
-        username=settings.DB_USER,
-        password=settings.DB_PASS
-    )
-)
 
 
 def get_aws_session():
