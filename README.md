@@ -1,2 +1,44 @@
-# DataEngineerTest
-PoC 
+# <Your-Project-Title>
+
+## Descripción
+
+Es proyecto se desarrola con el fin de poner en practica las diferentes herramientas que un ingeniero de datos debe conocer tales como:
+- Creacion de un API
+- Generacion de backups
+- Conexon a base de datos
+- Ingesta y limpieza de datos
+- Conexion a S3
+- Uso de Docker
+
+## Índice
+
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Funciones](#funciones)
+- [Licencia](#licencia)
+
+## Instalación
+
+Para el buen funcionamiento del proyecto es necesario realizar los siguientes pasos:
+
+- Clone el repositorio
+- Una vez clonado configure el archivo .env (Tome de base el archivo env.example)
+- - Acceso AWS: Configure el access key en su entorno aws (https://us-east-1.console.aws.amazon.com/iam)
+  - S3 Bucket: Cree un bucket en s3
+  - FERNET KEY: Cree el key para encriptar el password en base de datos (https://8gwifi.org/fernet.jsp)
+  - JWT_KEY: Cree un valor semilla para la generacion del Token
+- Ejecucion:
+- -  Ubiquese en la carpeta docker
+  -  ejecute el comando docker-compose up --build
+- Cuando finalice la ejecucion y se esten ejecutando los servicios en docker debe configurar el user y password para la autenticacion en base de datos
+- - Usando el FERNET_KEY encripte una contrasena (https://8gwifi.org/fernet.jsp)
+  - Conectese a la base de datos e inserte los datos de user y password (encriptada)
+  - - Tabla auth.user
+
+## Uso
+
+Ve a la direccion [localhost:1210/docs](http://localhost:1210/docs#/)
+
+## Funciones
+
+
