@@ -10,6 +10,23 @@ from app.common import constants, handlers
 
 S3_FOLDER: str = S3_FOLDER
 
+def execute_db(
+    cls,
+    cursor,
+    query_type: str,
+    query: str,
+    **kwargs
+):
+    query = cls.read_file(
+        f'source/{query_type}/{query}.sql'
+    ).format(
+        **kwargs
+    )
+
+    cursor.execute(
+        query
+    )
+
 def write_transformed(
         utc_time: str,
         file: dict,
@@ -35,8 +52,6 @@ def write_transformed(
         file['contents'] = string.getvalue()
         file['extension'] = '.csv'
 
-        #insertar en bd
-        print('asd')
         handlers.UploadHandler.write_to_s3(
             utc_time,
             file,
@@ -72,9 +87,8 @@ def upload_file(type_table: str, file):
     now2 = datetime.utcnow()
     now = now2.strftime(constants.DATETIME_FORMAT)
     file_data = handlers.UploadHandler.file_contents(file)
-
+    print('upload')
     try:
-        print('source')
         uploaded = handlers.UploadHandler.write_to_s3(
             now,
             file_data,
@@ -99,69 +113,19 @@ def upload_file(type_table: str, file):
 
         if transformed is not None:
             
-            print('conexion')
-            conn = conn_bd().connect()
-            trans = conn.begin()
-            transformed['create_at'] = now2
-            transformed.to_sql(type_table,schema='data',if_exists='append',con=conn,index=False,chunksize=1000)
-            print('fin conexion')
-            # try:
-            #     handlers.clean_redshift(
-            #         conn,
-            #         staging_table=TABLES[platform]['staging_table'],
-            #         source_route=uploaded['path']
-            #     )
-            #     handlers.clean_redshift(
-            #         conn,
-            #         staging_table=TABLES[platform]['enrich_table'],
-            #         source_route=uploaded['path']
-            #     )
-            #     handlers.copy_to_redshift(
-            #         conn,
-            #         bucket=os.getenv('S3_BUCKET'),
-            #         staging_table=TABLES[platform]['staging_table'],
-            #         source_route=transformed['path']
-            #     )
-            #     handlers.execute_redshift(
-            #         conn,
-            #         query_type='enrich',
-            #         query=TABLES[platform]['name'],
-            #         staging_table=TABLES[platform]['staging_table'],
-            #     enrich_table=TABLES[platform]['enrich_table'],
-            #     source_route=uploaded['path']
-            #     )
-            #     handlers.execute_redshift(
-            #         conn,
-            #         query_type='update',
-            #         query='update',
-            #         final_table=TABLES[platform]['final_table'],
-            #         enrich_table=TABLES[platform]['enrich_table'],
-            #         source_route=uploaded['path']
-            #     )
-            #     handlers.execute_redshift(
-            #         conn,
-            #         query_type='insert',
-            #         query='insert',
-            #         final_table=TABLES[platform]['final_table'],
-            #         enrich_table=TABLES[platform]['enrich_table'],
-            #         source_route=uploaded['path']
-            #     )
-            #     handlers.clean_redshift(
-            #         conn, 
-            #         staging_table=TABLES[platform]['staging_table'], 
-            #         source_route=uploaded['path']
-            #     )
-            #     handlers.clean_redshift(
-            #         conn, 
-            #         staging_table=TABLES[platform]['enrich_table'], 
-            #         source_route=uploaded['path']
-            #     )
+            if type_table in ['jobs','departments']:
 
-            trans.commit()
+                create_tmp(type_table=type_table,data=transformed)
+                # update_db2(utc_time=now2,type_table=type_table,data=transformed)
+                insert_db2(utc_time=now2,type_table=type_table,data=transformed)
+                delete_tmp(type_table=type_table,data=transformed)
+            elif type_table in 'hired_employees':
+                conn = conn_bd().connect()
+                trans = conn.begin()
+                transformed['create_at'] = now2
+                transformed.to_sql(type_table,schema='data',if_exists='append',con=conn,index=False,chunsize=1000)
+                trans.commit()
 
-            # except Exception as e:
-            #     trans.rollback()
-            #     raise e
 
 
     except Exception as e:
@@ -175,3 +139,82 @@ def upload_file(type_table: str, file):
         'source': uploaded,
         'transformed': transformed
     }
+
+def create_tmp(type_table,data):
+
+    tmp_Table = f'{type_table}__tmp'
+    conn = conn_bd().connect()
+    trans = conn.begin()
+
+    if type_table =='departments':
+        conn.execute(f'''
+                    CREATE TABLE "data".{tmp_Table} (
+                        id int4 NOT NULL,
+                        department varchar(50) NOT NULL
+                    );
+                    ''')
+    elif type_table =='jobs':
+        conn.execute(f'''
+                    CREATE TABLE "data".{tmp_Table} (
+                        id int4 NOT NULL,
+                        job varchar(50) NOT NULL
+                    );
+                    ''')
+    
+    data.to_sql(tmp_Table,schema='data',if_exists='append',con=conn,index=False,chunsize=1000)
+
+    trans.commit()
+
+
+def insert_db2(utc_time,type_table,data):
+
+    tmp_Table = f'{type_table}__tmp'
+
+    conn = conn_bd().connect()
+    trans = conn.begin()
+
+    if type_table =='departments':
+        campo ='department'
+    elif type_table =='jobs':
+        campo ='job'
+
+    conn.execute(f'''
+                UPDATE "data".{type_table} AS f
+                SET
+                    updated_at  = now() ,
+                    deleted_at  = now()
+                FROM
+                    "data".{type_table} AS f_temp
+                INNER JOIN "data".{tmp_Table} AS stg
+                    ON f_temp.id = stg.id
+                    AND f_temp.deleted_at is null
+                WHERE
+                    f_temp.id = f.id
+                    AND f.deleted_at is null
+                    AND
+                    (
+                        COALESCE(f.{campo}, '') != COALESCE(stg.{campo}) 
+                    );
+                ''')
+    # NEWS
+    conn.execute(f'''
+                INSERT INTO "data".{type_table}
+                (id, {campo}, create_at, updated_at, deleted_at)
+                select tmp.id, tmp.{campo},now(),now(),null
+                FROM "data".{tmp_Table} AS tmp
+                left JOIN "data".{type_table} AS old
+                    ON (tmp.id = old.id and old.deleted_at is null)
+                WHERE old.id is null;
+                ''')
+    trans.commit()
+
+def delete_tmp(type_table,data):
+    tmp_Table = f'{type_table}__tmp'
+    conn = conn_bd().connect()
+    trans = conn.begin()
+
+    conn.execute(f'''
+                drop TABLE "data".{tmp_Table};
+                ''')
+
+    trans.commit()

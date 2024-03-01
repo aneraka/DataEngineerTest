@@ -1,3 +1,4 @@
+import json
 import os
 from abc import abstractmethod
 from app.config.connections import get_aws_session, get_s3_resource
@@ -52,6 +53,36 @@ class UploadHandler:
             ).put(Body=file['contents'])
         }
     
+    @classmethod
+    def write_to_s3_avro(cls, utc_time: str, file,type_table:str,proceso:str, *args):
+
+
+        s3 = get_s3_resource(
+            get_aws_session()
+        )
+        s3_path = cls.s3_path(
+            'backup',
+            type_table,
+            utc_time
+        ) + '.avro'
+        # Body=bytes(json.dumps(file, default=str).encode())
+        s3.Object(
+                os.getenv('S3_BUCKET'),
+                s3_path
+            ).put(Body=file)
+        
+        return s3_path
+    
+    @classmethod
+    def get_list_s3(cls,type_table:str, *args):
+        
+        s3 = get_s3_resource(
+            get_aws_session()
+        )
+        bucket = s3.Bucket(os.getenv('S3_BUCKET'))
+        objects = list(bucket.objects.filter(Prefix=f'backup/{type_table}'))
+        objects = [o.key for o in objects]
+        return objects
 
     @classmethod
     @abstractmethod
@@ -83,16 +114,7 @@ class UploadHandler:
         )
 
     @classmethod
-    def enrich_redshift(cls, cursor, *args, **kwargs):
-        cursor.execute(
-            cls.REDSHIFT_ENRICH_QUERY.format(
-                *args,
-                **kwargs
-            )
-        )
-
-    @classmethod
-    def update_redshift(cls, cursor, *args, **kwargs):
+    def update_db(cls, cursor, *args, **kwargs):
         cursor.execute(
             cls.REDSHIFT_UPDATE_QUERY.format(
                 *args,
@@ -101,7 +123,9 @@ class UploadHandler:
         )
 
     @classmethod
-    def insert_redshift(cls, cursor, *args, **kwargs):
+    def insert_db(cls, cursor, *args, **kwargs):
+
+        
         cursor.execute(
             cls.REDSHIFT_INSERT_QUERY.format(
                 *args,

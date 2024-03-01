@@ -21,7 +21,7 @@ def get_df(
         import io
 
         data_buffer = io.BytesIO(data)
-        print(data_buffer)
+
         try:
             data = pd.read_csv(
                 data_buffer,
@@ -41,10 +41,7 @@ def get_df(
         
 def transform(data, type_table: str):
 
-    if type_table == 'departments':
-        data_ok, data_bad = tabla_1(data, type_table)
-    else:
-        return None
+    data_ok, data_bad = tabla_1(data, type_table)
 
     return data_ok,data_bad
 
@@ -54,12 +51,12 @@ def tabla_1(data, type_table:str):
     column_trans = {}
     columns_numeric = []
     if type_table == 'departments':
-
         column_trans = {0:'id',1:'department'}
-        columns_numeric = [
-            'id'
-        ]
-
+    elif type_table == 'jobs':
+        column_trans = {0:'id',1:'job'}
+    elif type_table == 'hired_employees':
+        column_trans = {0:'id',1:'name',2:'datetime',3:'department_id',4:'job_id'}
+         
     data.rename(columns=column_trans,inplace=True)
 
     index_bad = set([])

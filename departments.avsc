@@ -1,0 +1,11 @@
+{"namespace": "example.avro",
+ "type": "record",
+ "name": "departments",
+ "fields": [
+     {"name": "id", "type": "int"},
+     {"name": "department",  "type": "string"},
+     {"name": "create_at",  "type": "string"},
+     {"name": "updated_at",  "type": "string"},
+     {"name": "deleted_at",  "type": ["string", "null"]}
+ ]
+}
