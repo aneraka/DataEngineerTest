@@ -37,12 +37,12 @@ def receive_post_data(data: Reporte = Depends()):
     
     return result.result
 
-@router.post('report/kpi1', dependencies=[Depends(JWTBearer())])
+@router.post('/report/kpi1', dependencies=[Depends(JWTBearer())])
 def receive_post_data():
     proceso = reporte()
     return     proceso.kpi1()
 
-@router.post('report/kpi2', dependencies=[Depends(JWTBearer())])
+@router.post('/report/kpi2', dependencies=[Depends(JWTBearer())])
 def receive_post_data():
     proceso = reporte()
     return     proceso.kpi2()

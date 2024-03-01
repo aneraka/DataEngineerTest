@@ -23,6 +23,8 @@ class Backup(BaseModel):
         'jobs'
     ]
 
+    file: str = ''
+
 class ReporteBase(BaseModel):
     dimension: str
     metric: str

@@ -67,3 +67,13 @@ def tabla_1(data, type_table:str):
     data_ok = data.filter(items=good_index, axis=0)
     data_no = data.filter(items=index_bad, axis=0)
     return data_ok,data_no
+
+def read_file(filename: str) -> str:
+    import os
+    path = os.path.join(
+        os.path.dirname(__file__),
+        filename
+    )
+
+    with open(path) as file:
+        return file.read()

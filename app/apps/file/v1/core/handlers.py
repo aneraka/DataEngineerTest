@@ -33,7 +33,7 @@ def write_transformed(
         source_route: str,
         type_table: str
 ):  
-
+    import pandas as pd
     output = get_df(
         data=file['contents']
     )
@@ -80,7 +80,8 @@ def write_transformed(
         return output
     
     else:
-        return None
+      
+        return pd.DataFrame()
     
 
 def upload_file(type_table: str, file):
@@ -110,9 +111,8 @@ def upload_file(type_table: str, file):
             source_route=uploaded['path'],
             type_table=type_table
         )
-
-        if transformed is not None:
-            
+        
+        if not transformed.empty:
             if type_table in ['jobs','departments']:
 
                 create_tmp(type_table=type_table,data=transformed)
@@ -123,7 +123,7 @@ def upload_file(type_table: str, file):
                 conn = conn_bd().connect()
                 trans = conn.begin()
                 transformed['create_at'] = now2
-                transformed.to_sql(type_table,schema='data',if_exists='append',con=conn,index=False,chunsize=1000)
+                transformed.to_sql(type_table,schema='data',if_exists='append',con=conn,index=False)
                 trans.commit()
 
 
@@ -161,7 +161,7 @@ def create_tmp(type_table,data):
                     );
                     ''')
     
-    data.to_sql(tmp_Table,schema='data',if_exists='append',con=conn,index=False,chunsize=1000)
+    data.to_sql(tmp_Table,schema='data',if_exists='append',con=conn,index=False)
 
     trans.commit()
 
