@@ -2,13 +2,13 @@
 
 ## Descripción
 
-Es proyecto se desarrola con el fin de poner en practica las diferentes herramientas que un ingeniero de datos debe conocer tales como:
-- Creacion de un API
-- Generacion de backups
-- Conexon a base de datos
-- Ingesta y limpieza de datos
-- Conexion a S3
-- Uso de Docker
+Es proyecto se desarrola con el fin de poner en practica diferentes herramientas que son usadas en el desarrollo de la ingenieria de datos:
+
+- FASTapi
+- Aws S3
+- Base de datos (Postgresql)
+- Docker
+- Formato de archivos AVRO
 
 ## Índice
 
@@ -41,4 +41,15 @@ Ve a la direccion [localhost:1210/docs](http://localhost:1210/docs#/)
 
 ## Funciones
 
+- Generacion de token para proporciona seguridad
+- Subir archivos a base de datos
+- - Almacenamiento archivos origen en S3
+  - Almacenamiento en base de datos
+  - Control de cambios
+- Creacion de archivos AVRO
+- - Almacenamiento en S3
+- Listado de archivos en S3
+- Entrega de informacion
+- - Reporte personalizado
+  - Reportes especificos
 
