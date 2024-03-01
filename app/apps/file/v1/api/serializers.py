@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from pydantic.typing import Literal
+from typing import List
 
 
 class UploadSerializer(BaseModel):
@@ -21,3 +22,12 @@ class Backup(BaseModel):
         'hired_employees',
         'jobs'
     ]
+
+class ReporteBase(BaseModel):
+    dimension: str
+    metric: str
+
+class Reporte(BaseModel):
+    data: List[ReporteBase]
+
+
